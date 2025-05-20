@@ -9,7 +9,9 @@ import {
 } from "@/components/ui/table";
 
 export default async function History() {
-  const { data : reservationHistory } = await client.GET("/admin/concert/reservation/history");
+  const { data: reservationHistory } = await client.GET(
+    "/admin/concert/reservation/history"
+  );
   return (
     <div className="flex flex-col h-full py-10 px-6 gap-4">
       <Table>
@@ -35,7 +37,9 @@ export default async function History() {
                   <TableCell>{reservation.createdAt}</TableCell>
                   <TableCell>{reservation.userId}</TableCell>
                   <TableCell>{reservation.concertName}</TableCell>
-                  <TableCell>{reservation.status}</TableCell>
+                  <TableCell>
+                    {reservation.status === "RESERVE" ? "Reserve" : "Cancel"}
+                  </TableCell>
                 </TableRow>
               ))}
             </>

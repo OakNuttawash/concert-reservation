@@ -28,7 +28,7 @@ export async function createConcert(data: z.infer<typeof concertSchema>) {
   if (res.error) {
     return {
       status: "error",
-      message: res.error.message.join(", "),
+      message: res.error.message,
     };
   }
   revalidatePath("/");
@@ -51,7 +51,7 @@ export async function deleteConcert(concertId: string) {
   if (res.error) {
     return {
       status: "error",
-      message: res.error.message.join(", "),
+      message: res.error.message,
     };
   }
   revalidatePath("/");

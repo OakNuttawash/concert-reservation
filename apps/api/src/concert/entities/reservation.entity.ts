@@ -1,6 +1,7 @@
 export enum ReservationStatus {
   RESERVE = 'RESERVE',
   CANCEL = 'CANCEL',
+  NONE = 'NONE',
 }
 
 export class Reservation {

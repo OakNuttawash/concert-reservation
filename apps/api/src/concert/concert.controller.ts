@@ -1,4 +1,4 @@
-import { Body, Controller, Delete, Get, Param, Post } from '@nestjs/common';
+import { BadRequestException, Body, Controller, Delete, Get, NotFoundException, Param, Post } from '@nestjs/common';
 import { ApiOperation, ApiResponse } from '@nestjs/swagger';
 import { ErrorResponse } from 'src/utils/errors';
 import { ConcertService } from './concert.service';
@@ -100,12 +100,32 @@ export class UserConcertController {
 
   @Post(':id/reservation/reserve')
   @ApiOperation({ summary: 'Reserve a seat for a concert' })
+  @ApiResponse({ status: 200, description: 'Seat reserved successfully' })
   @ApiResponse({
-    status: 200,
-    description: 'Reservation seat reserved successfully',
+    status: 404,
+    description: 'Concert not found',
+    type: ErrorResponse,
+  })
+  @ApiResponse({
+    status: 400,
+    description: 'No seats available',
+    type: ErrorResponse,
   })
   reserve(@Param('id') id: string) {
-    return this.concertService.reserveSeat(+id);
+    try {
+      return this.concertService.reserveSeat(+id);
+    } catch (error) {
+      if (error instanceof Error && error.message === 'Concert not found') {
+        throw new NotFoundException(error.message);
+      }
+      if (
+        error instanceof Error &&
+        error.message === 'No more seats available'
+      ) {
+        throw new BadRequestException(error.message);
+      }
+      throw error;
+    }
   }
 
   @Post(':id/reservation/cancel')
@@ -114,7 +134,23 @@ export class UserConcertController {
     status: 200,
     description: 'Reservation canceled successfully',
   })
+  @ApiResponse({
+    status: 404,
+    description: 'Concert or reservation not found',
+    type: ErrorResponse,
+  })
   cancelReservation(@Param('id') id: string) {
-    return this.concertService.cancelReservation(+id);
+    try {
+      return this.concertService.cancelReservation(+id);
+    } catch (error) {
+      if (
+        error instanceof Error &&
+        (error.message === 'Concert not found' ||
+          error.message === 'Reservation not found')
+      ) {
+        throw new NotFoundException(error.message);
+      }
+      throw error;
+    }
   }
 }

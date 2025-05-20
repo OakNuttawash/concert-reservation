@@ -36,7 +36,7 @@ export class GetUserConcertDto {
   totalSeat: number;
   @ApiProperty()
   currentTotalSeat: number;
-  @ApiProperty()
+  @ApiProperty({ enum: ['RESERVE', 'CANCEL', 'NONE'] })
   reservationStatus: ReservationStatus;
 }
 
@@ -69,7 +69,7 @@ export class GetReservationHistoryDto {
   concertName: string;
   @ApiProperty()
   userId: number;
-  @ApiProperty()
+  @ApiProperty({ enum: ['RESERVE', 'CANCEL', 'NONE'] })
   status: ReservationStatus;
   @ApiProperty()
   createdAt: Date;

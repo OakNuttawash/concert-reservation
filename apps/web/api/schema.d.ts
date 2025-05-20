@@ -167,7 +167,8 @@ export interface components {
             id: number;
             concertName: string;
             userId: number;
-            status: string;
+            /** @enum {string} */
+            status: "RESERVE" | "CANCEL" | "NONE";
             /** Format: date-time */
             createdAt: string;
         };
@@ -182,7 +183,8 @@ export interface components {
             description: string;
             totalSeat: number;
             currentTotalSeat: number;
-            reservationStatus: string;
+            /** @enum {string} */
+            reservationStatus: "RESERVE" | "CANCEL" | "NONE";
         };
     };
     responses: never;
@@ -388,12 +390,30 @@ export interface operations {
         };
         requestBody?: never;
         responses: {
-            /** @description Reservation seat reserved successfully */
+            /** @description Seat reserved successfully */
             200: {
                 headers: {
                     [name: string]: unknown;
                 };
                 content?: never;
+            };
+            /** @description No seats available */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Concert not found */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
             };
         };
     };
@@ -414,6 +434,15 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content?: never;
+            };
+            /** @description Concert or reservation not found */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
             };
         };
     };

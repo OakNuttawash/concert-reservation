@@ -48,7 +48,7 @@ export class ConcertService {
       );
       return {
         ...concert,
-        reservationStatus: reservation?.status || ReservationStatus.RESERVE,
+        reservationStatus: reservation?.status || ReservationStatus.NONE,
       };
     });
   }
@@ -129,7 +129,7 @@ export class ConcertService {
   getAllDashboardData(): GetAdminDashboardDto {
     return {
       totalSeats: this.concerts.reduce(
-        (sum, concert) => sum + concert.currentTotalSeat,
+        (sum, concert) => sum + concert.totalSeat,
         0,
       ),
       totalReserveReservation: this.reservations.filter(
