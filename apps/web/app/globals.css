@@ -43,6 +43,8 @@
 
   --color-primary-light: var(--primary-light);
   --color-primary-dark: var(--primary-dark);
+
+  --color-toast-success: var(--toast-success);
 }
 
 :root {
@@ -82,6 +84,8 @@
 
   --primary-light: hsla(196, 56%, 95%, 1);
   --primary-dark: hsla(199, 100%, 32%, 1);
+
+  --toast-success: hsla(125, 32%, 86%, 1);
 }
 
 .dark {

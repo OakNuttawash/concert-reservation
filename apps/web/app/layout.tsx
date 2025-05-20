@@ -1,5 +1,6 @@
 import { Providers } from "@/components/providers/Provider";
 import { Sidebar } from "@/components/Sidebar";
+import { Toaster } from "@/components/ui/toaster";
 import type { Metadata } from "next";
 import "./globals.css";
 
@@ -22,6 +23,7 @@ export default function RootLayout({
             <main className="flex-1 bg-gray-100 w-full">{children}</main>
           </div>
         </Providers>
+        <Toaster />
       </body>
     </html>
   );

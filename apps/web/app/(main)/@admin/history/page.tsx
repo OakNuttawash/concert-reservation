@@ -1,5 +1,4 @@
-"use client";
-
+import client from "@/api/client";
 import {
   Table,
   TableBody,
@@ -9,27 +8,38 @@ import {
   TableRow,
 } from "@/components/ui/table";
 
-export default function History() {
+export default async function History() {
+  const { data : reservationHistory } = await client.GET("/admin/concert/reservation/history");
   return (
     <div className="flex flex-col h-full py-10 px-6 gap-4">
       <Table>
         <TableHeader>
           <TableRow>
             <TableHead>Date time</TableHead>
-            <TableHead>Username</TableHead>
+            <TableHead>User Name</TableHead>
             <TableHead>Concert Name</TableHead>
-            <TableHead>Action</TableHead>
+            <TableHead>Status</TableHead>
           </TableRow>
         </TableHeader>
         <TableBody>
-          {Array.from({ length: 10 }).map((_, i) => (
-            <TableRow key={i}>
-              <TableCell>2025-01-01 12:00:00</TableCell>
-              <TableCell>John Doe</TableCell>
-              <TableCell>Concert Name</TableCell>
-              <TableCell>Reserve</TableCell>
+          {reservationHistory?.length === 0 ? (
+            <TableRow>
+              <TableCell colSpan={4} className="text-center">
+                No history
+              </TableCell>
             </TableRow>
-          ))}
+          ) : (
+            <>
+              {reservationHistory?.map((reservation) => (
+                <TableRow key={reservation.id}>
+                  <TableCell>{reservation.createdAt}</TableCell>
+                  <TableCell>{reservation.userId}</TableCell>
+                  <TableCell>{reservation.concertName}</TableCell>
+                  <TableCell>{reservation.status}</TableCell>
+                </TableRow>
+              ))}
+            </>
+          )}
         </TableBody>
       </Table>
     </div>

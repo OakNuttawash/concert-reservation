@@ -1,5 +1,6 @@
 "use client";
 
+import { createConcert } from "@/api/concert/action";
 import { Button } from "@/components/ui/button";
 import {
   Form,
@@ -12,11 +13,12 @@ import { Input } from "@/components/ui/input";
 import { Separator } from "@/components/ui/separator";
 import { Textarea } from "@/components/ui/textarea";
 import { concertSchema } from "@/lib/schema/concertSchema";
-
 import { zodResolver } from "@hookform/resolvers/zod";
 import { Save } from "lucide-react";
+import { startTransition } from "react";
 import { useForm } from "react-hook-form";
 import { z } from "zod";
+import { toast } from "./ui/use-toast";
 
 export function CreateConcertCard() {
   const form = useForm({
@@ -29,7 +31,23 @@ export function CreateConcertCard() {
   });
 
   async function onSubmit(data: z.infer<typeof concertSchema>) {
-    console.log(data);
+    startTransition(async () => {
+      const res = await createConcert(data);
+
+      if (res.status === "error") {
+        toast({
+          title: "Error",
+          description: res.message,
+          variant: "destructive",
+        });
+      } else {
+        toast({
+          title: "Success",
+          description: res.message,
+          variant: "success",
+        });
+      }
+    });
   }
   return (
     <div className="flex flex-col p-10 gap-8 rounded-sm border bg-white border-gray-200">
