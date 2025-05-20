@@ -152,7 +152,7 @@ export interface components {
         ErrorResponse: {
             /** @example 400 */
             statusCode: number;
-            message: string[];
+            message: string | string[];
             /** @example Bad Request */
             error: string;
         };
@@ -434,6 +434,15 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content?: never;
+            };
+            /** @description Reservation is already cancelled */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
             };
             /** @description Concert or reservation not found */
             404: {

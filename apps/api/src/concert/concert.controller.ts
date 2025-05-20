@@ -1,4 +1,13 @@
-import { BadRequestException, Body, Controller, Delete, Get, NotFoundException, Param, Post } from '@nestjs/common';
+import {
+  BadRequestException,
+  Body,
+  Controller,
+  Delete,
+  Get,
+  NotFoundException,
+  Param,
+  Post,
+} from '@nestjs/common';
 import { ApiOperation, ApiResponse } from '@nestjs/swagger';
 import { ErrorResponse } from 'src/utils/errors';
 import { ConcertService } from './concert.service';
@@ -120,7 +129,9 @@ export class UserConcertController {
       }
       if (
         error instanceof Error &&
-        error.message === 'No more seats available'
+        (error.message === 'No more seats available' ||
+          error.message ===
+            'You already have an active reservation for this concert')
       ) {
         throw new BadRequestException(error.message);
       }
@@ -139,6 +150,11 @@ export class UserConcertController {
     description: 'Concert or reservation not found',
     type: ErrorResponse,
   })
+  @ApiResponse({
+    status: 400,
+    description: 'Reservation is already cancelled',
+    type: ErrorResponse,
+  })
   cancelReservation(@Param('id') id: string) {
     try {
       return this.concertService.cancelReservation(+id);
@@ -149,6 +165,12 @@ export class UserConcertController {
           error.message === 'Reservation not found')
       ) {
         throw new NotFoundException(error.message);
+      }
+      if (
+        error instanceof Error &&
+        error.message === 'Reservation is already cancelled'
+      ) {
+        throw new BadRequestException(error.message);
       }
       throw error;
     }

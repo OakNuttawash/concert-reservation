@@ -32,8 +32,8 @@ export default async function History() {
             </TableRow>
           ) : (
             <>
-              {reservationHistory?.map((reservation) => (
-                <TableRow key={reservation.id}>
+              {reservationHistory?.map((reservation, i) => (
+                <TableRow key={i}>
                   <TableCell>{reservation.createdAt}</TableCell>
                   <TableCell>{reservation.userId}</TableCell>
                   <TableCell>{reservation.concertName}</TableCell>

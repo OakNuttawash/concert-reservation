@@ -63,7 +63,7 @@ export function UserConcertCard(props: ConcertCardProps) {
       <div className="flex flex-row justify-between gap-4 items-center">
         <div className="flex flex-row gap-2 items-center">
           <User />
-          <h5>500</h5>
+          <h5>{concert.currentTotalSeat}</h5>
         </div>
         {mode === "reserve" && <Button onClick={ReserveSeat}>Reserve</Button>}
         {mode === "cancel" && (
