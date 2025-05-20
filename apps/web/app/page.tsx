@@ -1,4 +1,5 @@
 import { ConcertCard } from "@/components/ConcertCard";
+import { CreateConcertCard } from "@/components/CreateConcertCard";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Award, CircleX, User } from "lucide-react";
 
@@ -44,7 +45,9 @@ export default async function Home() {
             <ConcertCard mode="reserve" />
           </div>
         </TabsContent>
-        <TabsContent value="create">Crete concert</TabsContent>
+        <TabsContent value="create">
+          <CreateConcertCard />
+        </TabsContent>
       </Tabs>
     </div>
   );
