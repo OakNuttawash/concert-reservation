@@ -18,7 +18,7 @@ import { cn } from "@/lib/utils";
 import { Home, Inbox, LogOut, RefreshCcw } from "lucide-react";
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
-import { useState } from "react";
+import { useRole } from "./providers/RoleProvider";
 
 type Role = "Admin" | "User";
 
@@ -127,7 +127,7 @@ function SidebarMobile(props: SidebarProps) {
 
 export function Sidebar() {
   const isMobile = useIsMobile();
-  const [role, setRole] = useState<Role>("Admin");
+  const { role, setRole } = useRole();
 
   if (isMobile) {
     return <SidebarMobile role={role} setRole={setRole} />;
