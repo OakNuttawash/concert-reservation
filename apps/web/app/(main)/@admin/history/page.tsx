@@ -7,6 +7,7 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
+import dayjs from "dayjs";
 
 export default async function History() {
   const { data: reservationHistory } = await client.GET(
@@ -34,7 +35,9 @@ export default async function History() {
             <>
               {reservationHistory?.reverse()?.map((reservation, i) => (
                 <TableRow key={i}>
-                  <TableCell>{reservation.createdAt}</TableCell>
+                  <TableCell>
+                    {dayjs(reservation.createdAt).format("DD/MM/YYYY HH:mm:ss")}
+                  </TableCell>
                   <TableCell>{reservation.userId}</TableCell>
                   <TableCell>{reservation.concertName}</TableCell>
                   <TableCell>

@@ -1,8 +1,15 @@
 import { Providers } from "@/components/providers/Provider";
 import { Sidebar } from "@/components/Sidebar";
 import { Toaster } from "@/components/ui/toaster";
+import dayjs from "dayjs";
+import timezone from "dayjs/plugin/timezone";
+import utc from "dayjs/plugin/utc";
 import type { Metadata } from "next";
 import "./globals.css";
+
+dayjs.extend(utc);
+dayjs.extend(timezone);
+dayjs.tz.setDefault("Asia/Bangkok");
 
 export const metadata: Metadata = {
   title: "Create Next App",
