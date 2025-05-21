@@ -3,6 +3,8 @@ import {
   Injectable,
   NotFoundException,
 } from '@nestjs/common';
+import { InjectRepository } from '@nestjs/typeorm';
+import { Repository } from 'typeorm';
 import {
   CreateConcertDto,
   GetAdminConcertDto,
@@ -10,157 +12,231 @@ import {
   GetReservationHistoryDto,
   GetUserConcertDto,
 } from './dto/concert.dto';
-
 import { Concert } from './entities/concert.entity';
-import { Reservation, ReservationStatus } from './entities/reservation.entity';
+import {
+  Reservation,
+  ReservationHistory,
+  ReservationStatus,
+} from './entities/reservation.entity';
 
 @Injectable()
 export class ConcertService {
-  // This is mock data. If restart server, all data will be reset
-  private concerts: Concert[] = [];
-  private reservations: Reservation[] = [];
-  private concertId = 1;
-  private reservationId = 1;
+  constructor(
+    @InjectRepository(Concert)
+    private concertRepository: Repository<Concert>,
+    @InjectRepository(Reservation)
+    private reservationRepository: Repository<Reservation>,
+    @InjectRepository(ReservationHistory)
+    private reservationHistoryRepository: Repository<ReservationHistory>,
+  ) {}
 
-  createConcert(createConcertDto: CreateConcertDto): Concert {
-    const newConcert: Concert = {
-      id: this.concertId++,
+  async createConcert(createConcertDto: CreateConcertDto): Promise<Concert> {
+    const concert = this.concertRepository.create({
       ...createConcertDto,
       currentTotalSeat: createConcertDto.totalSeat,
-    };
-
-    this.concerts.push(newConcert);
-    return newConcert;
-  }
-
-  findAllAdminConcerts(): GetAdminConcertDto[] {
-    return this.concerts;
-  }
-
-  findAllUserConcerts(): GetUserConcertDto[] {
-    // This userId is mock user, have 2 role : admin and user
-    const userId = 1;
-    return this.concerts.map((concert) => {
-      const reservation = this.reservations.findLast(
-        (reservation) =>
-          reservation.concertId === concert.id && reservation.userId === userId,
-      );
-      return {
-        ...concert,
-        reservationStatus: reservation?.status || ReservationStatus.NONE,
-      };
     });
+    return this.concertRepository.save(concert);
   }
 
-  removeConcert(id: number) {
-    const concert = this.concerts.find((concert) => concert.id === id);
-    if (!concert) {
-      throw new NotFoundException('Concert not found');
-    }
-    this.concerts = this.concerts.filter((concert) => concert.id !== id);
-    return;
+  async findAllAdminConcerts(): Promise<GetAdminConcertDto[]> {
+    return this.concertRepository.find();
   }
 
-  reserveSeat(concertId: number): Reservation {
-    // This userId is mock user, have 2 role : admin and user
-    const userId = 1;
-    const concert = this.concerts.find((concert) => concert.id === concertId);
-    if (!concert) {
-      throw new NotFoundException('Concert not found');
-    }
-    if (concert.currentTotalSeat <= 0) {
-      throw new BadRequestException('No more seats available');
-    }
+  async findAllUserConcerts(): Promise<GetUserConcertDto[]> {
+    const userId = 1; // Mock user
+    const concerts = await this.concertRepository.find();
 
-    const existingReservation = this.reservations.findLast(
-      (reservation) =>
-        reservation.concertId === concertId && reservation.userId === userId,
-    );
-    if (
-      existingReservation &&
-      existingReservation.status === ReservationStatus.RESERVE
-    ) {
-      throw new BadRequestException(
-        'You already have an active reservation for this concert',
-      );
-    }
+    const concertsWithStatus = await Promise.all(
+      concerts.map(async (concert) => {
+        const reservation = await this.reservationRepository.findOne({
+          where: { concertId: concert.id, userId },
+          order: { createdAt: 'DESC' },
+        });
 
-    const newReservation: Reservation = {
-      id: this.reservationId++,
-      concertId,
-      concertName: concert.name,
-      userId,
-      status: ReservationStatus.RESERVE,
-      createdAt: new Date(),
-    };
-    this.reservations.push(newReservation);
-
-    concert.currentTotalSeat--;
-    return newReservation;
-  }
-
-  cancelReservation(concertId: number): Reservation {
-    // This userId is mock user, have 2 role : admin and user
-    const userId = 1;
-    const concert = this.concerts.find((concert) => concert.id === concertId);
-    if (!concert) {
-      throw new NotFoundException('Concert not found');
-    }
-
-    const reservation = this.reservations.findLast(
-      (reservation) =>
-        reservation.concertId === concertId && reservation.userId === userId,
+        return {
+          ...concert,
+          reservationStatus: reservation?.status || ReservationStatus.NONE,
+        };
+      }),
     );
 
-    if (!reservation) {
-      throw new NotFoundException('Reservation not found');
-    }
-
-    if (reservation.status === ReservationStatus.CANCEL) {
-      throw new BadRequestException('Reservation is already cancelled');
-    }
-
-    const cancelReservation: Reservation = {
-      ...reservation,
-      id: this.reservationId++,
-      createdAt: new Date(),
-      status: ReservationStatus.CANCEL,
-    };
-
-    this.reservations.push(cancelReservation);
-
-    concert.currentTotalSeat++;
-    return cancelReservation;
+    return concertsWithStatus;
   }
 
-  findAllReservationHistory(): GetReservationHistoryDto[] {
-    const reservationHistories = this.reservations.map((reservationHistory) => {
-      return {
-        id: reservationHistory.id,
-        userId: reservationHistory.userId,
-        status: reservationHistory.status,
-        concertName: reservationHistory.concertName,
-        createdAt: reservationHistory.createdAt,
-      };
+  async removeConcert(id: number): Promise<void> {
+    await this.concertRepository.manager.transaction(
+      async (transactionalEntityManager) => {
+        const concert = await transactionalEntityManager.findOne(Concert, {
+          where: { id },
+        });
+
+        if (!concert) {
+          throw new NotFoundException('Concert not found');
+        }
+
+        await transactionalEntityManager.delete(Reservation, { concertId: id });
+
+        await transactionalEntityManager.delete(ReservationHistory, {
+          concertId: id,
+        });
+
+        await transactionalEntityManager.delete(Concert, { id });
+      },
+    );
+  }
+
+  async reserveSeat(concertId: number): Promise<Reservation> {
+    const userId = 1; // Mock user
+
+    return await this.concertRepository.manager.transaction(
+      async (transactionalEntityManager) => {
+        const concert = await transactionalEntityManager.findOne(Concert, {
+          where: { id: concertId },
+        });
+
+        if (!concert) {
+          throw new NotFoundException('Concert not found');
+        }
+
+        if (concert.currentTotalSeat <= 0) {
+          throw new BadRequestException('No more seats available');
+        }
+
+        const existingReservation = await transactionalEntityManager.findOne(
+          Reservation,
+          {
+            where: { concertId, userId },
+          },
+        );
+
+        if (existingReservation?.status === ReservationStatus.RESERVE) {
+          throw new BadRequestException(
+            'You already have an active reservation for this concert',
+          );
+        }
+
+        // Create or update reservation
+        const reservation =
+          existingReservation ||
+          transactionalEntityManager.create(Reservation, {
+            concertId,
+            concertName: concert.name,
+            userId,
+          });
+        reservation.status = ReservationStatus.RESERVE;
+
+        // Create reservation history
+        const reservationHistory = transactionalEntityManager.create(
+          ReservationHistory,
+          {
+            concertId,
+            concertName: concert.name,
+            userId,
+            status: ReservationStatus.RESERVE,
+          },
+        );
+
+        // Update concert seat count
+        await transactionalEntityManager.update(
+          Concert,
+          { id: concertId },
+          { currentTotalSeat: concert.currentTotalSeat - 1 },
+        );
+
+        await transactionalEntityManager.save(
+          ReservationHistory,
+          reservationHistory,
+        );
+        return transactionalEntityManager.save(Reservation, reservation);
+      },
+    );
+  }
+
+  async cancelReservation(concertId: number): Promise<Reservation> {
+    const userId = 1; // Mock user
+
+    return await this.concertRepository.manager.transaction(
+      async (transactionalEntityManager) => {
+        const concert = await transactionalEntityManager.findOne(Concert, {
+          where: { id: concertId },
+        });
+
+        if (!concert) {
+          throw new NotFoundException('Concert not found');
+        }
+
+        const reservation = await transactionalEntityManager.findOne(
+          Reservation,
+          {
+            where: { concertId, userId },
+          },
+        );
+
+        if (!reservation) {
+          throw new NotFoundException('Reservation not found');
+        }
+
+        if (reservation.status === ReservationStatus.CANCEL) {
+          throw new BadRequestException('Reservation is already cancelled');
+        }
+
+        reservation.status = ReservationStatus.CANCEL;
+
+        const reservationHistory = transactionalEntityManager.create(
+          ReservationHistory,
+          {
+            concertId,
+            concertName: concert.name,
+            userId,
+            status: ReservationStatus.CANCEL,
+          },
+        );
+
+        await transactionalEntityManager.update(
+          Concert,
+          { id: concertId },
+          { currentTotalSeat: concert.currentTotalSeat + 1 },
+        );
+
+        await transactionalEntityManager.save(
+          ReservationHistory,
+          reservationHistory,
+        );
+        return transactionalEntityManager.save(Reservation, reservation);
+      },
+    );
+  }
+
+  async findAllReservationHistory(): Promise<GetReservationHistoryDto[]> {
+    const reservationHistory = await this.reservationHistoryRepository.find({
+      order: { createdAt: 'DESC' },
     });
-    return reservationHistories;
+
+    return reservationHistory.map((history) => ({
+      id: history.id,
+      userId: history.userId,
+      status: history.status,
+      concertName: history.concertName,
+      createdAt: history.createdAt,
+    }));
   }
 
-  getAllDashboardData(): GetAdminDashboardDto {
+  async getAllDashboardData(): Promise<GetAdminDashboardDto> {
+    const [concerts, reservationHistory] = await Promise.all([
+      this.concertRepository.find(),
+      this.reservationHistoryRepository.find(),
+    ]);
+
     return {
-      // total concert remaining seat
-      totalSeats: this.concerts.reduce(
+      totalSeats: concerts.reduce(
         (sum, concert) => sum + concert.currentTotalSeat,
         0,
       ),
-      // total reserve seat history
-      totalReserveReservation: this.reservations.filter(
-        (reservation) => reservation.status === ReservationStatus.RESERVE,
+      totalReserveReservation: reservationHistory.filter(
+        (history) => history.status === ReservationStatus.RESERVE,
       ).length,
-
-      // total cancel seat history
-      totalCancelReservation: this.reservations.filter(
-        (reservation) => reservation.status === ReservationStatus.CANCEL,
+      totalCancelReservation: reservationHistory.filter(
+        (history) => history.status === ReservationStatus.CANCEL,
       ).length,
     };
   }
