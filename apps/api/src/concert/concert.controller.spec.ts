@@ -158,12 +158,14 @@ describe('ConcertController', () => {
         };
 
         adminController.create(createConcertDto);
+        userController.reserve('1');
+        userController.cancelReservation('1');
         const result = adminController.getDashboard();
 
         expect(result).toEqual({
           totalSeats: 100,
-          totalReserveReservation: 0,
-          totalCancelReservation: 0,
+          totalReserveReservation: 1,
+          totalCancelReservation: 1,
         });
       });
 
@@ -179,8 +181,8 @@ describe('ConcertController', () => {
   });
 
   describe('UserConcertController', () => {
-    describe('findAll', () => {
-      it('should return concerts with reservation status', () => {
+    describe('findAllConcert', () => {
+      it('should return concerts with none reservation status', () => {
         const createConcertDto: CreateConcertDto = {
           name: 'Test Concert',
           totalSeat: 100,
@@ -188,6 +190,7 @@ describe('ConcertController', () => {
         };
 
         adminController.create(createConcertDto);
+
         const result = userController.findAll();
 
         expect(result).toHaveLength(1);
@@ -196,6 +199,25 @@ describe('ConcertController', () => {
           ...createConcertDto,
           currentTotalSeat: 100,
           reservationStatus: ReservationStatus.NONE,
+        });
+      });
+      it('should return concerts with reservation status', () => {
+        const createConcertDto: CreateConcertDto = {
+          name: 'Test Concert',
+          totalSeat: 100,
+          description: 'This is a test concert description',
+        };
+
+        adminController.create(createConcertDto);
+        userController.reserve('1');
+        const result = userController.findAll();
+
+        expect(result).toHaveLength(1);
+        expect(result[0]).toEqual({
+          id: 1,
+          ...createConcertDto,
+          currentTotalSeat: 99,
+          reservationStatus: ReservationStatus.RESERVE,
         });
       });
 
@@ -288,6 +310,19 @@ describe('ConcertController', () => {
       });
       it('should throw NotFoundException when concert does not exist', () => {
         expect(() => userController.cancelReservation('999')).toThrow(
+          NotFoundException,
+        );
+      });
+      it('should throw NotFoundException when reservation not exist', () => {
+        const concert = {
+          id: 995,
+          name: 'No Seats Concert',
+          totalSeat: 100,
+          description: 'Test Concert',
+          currentTotalSeat: 99,
+        };
+        adminController.create(concert);
+        expect(() => userController.cancelReservation('995')).toThrow(
           NotFoundException,
         );
       });
