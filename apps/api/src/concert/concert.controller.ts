@@ -1,15 +1,6 @@
-import {
-  BadRequestException,
-  Body,
-  Controller,
-  Delete,
-  Get,
-  NotFoundException,
-  Param,
-  Post,
-} from '@nestjs/common';
+import { Body, Controller, Delete, Get, Param, Post } from '@nestjs/common';
 import { ApiOperation, ApiResponse } from '@nestjs/swagger';
-import { ErrorResponse } from 'src/utils/errors';
+import { ErrorResponse } from '../utils/errors';
 import { ConcertService } from './concert.service';
 import {
   CreateConcertDto,
@@ -37,11 +28,6 @@ export class AdminConcertController {
     status: 200,
     description: 'Concerts retrieved successfully',
     type: [GetAdminConcertDto],
-  })
-  @ApiResponse({
-    status: 404,
-    description: 'Concerts not found',
-    type: ErrorResponse,
   })
   findAll() {
     return this.concertService.findAllAdminConcerts();
@@ -121,22 +107,7 @@ export class UserConcertController {
     type: ErrorResponse,
   })
   reserve(@Param('id') id: string) {
-    try {
-      return this.concertService.reserveSeat(+id);
-    } catch (error) {
-      if (error instanceof Error && error.message === 'Concert not found') {
-        throw new NotFoundException(error.message);
-      }
-      if (
-        error instanceof Error &&
-        (error.message === 'No more seats available' ||
-          error.message ===
-            'You already have an active reservation for this concert')
-      ) {
-        throw new BadRequestException(error.message);
-      }
-      throw error;
-    }
+    return this.concertService.reserveSeat(+id);
   }
 
   @Post(':id/reservation/cancel')
@@ -156,23 +127,6 @@ export class UserConcertController {
     type: ErrorResponse,
   })
   cancelReservation(@Param('id') id: string) {
-    try {
-      return this.concertService.cancelReservation(+id);
-    } catch (error) {
-      if (
-        error instanceof Error &&
-        (error.message === 'Concert not found' ||
-          error.message === 'Reservation not found')
-      ) {
-        throw new NotFoundException(error.message);
-      }
-      if (
-        error instanceof Error &&
-        error.message === 'Reservation is already cancelled'
-      ) {
-        throw new BadRequestException(error.message);
-      }
-      throw error;
-    }
+    return this.concertService.cancelReservation(+id);
   }
 }

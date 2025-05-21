@@ -32,7 +32,7 @@ export default async function History() {
             </TableRow>
           ) : (
             <>
-              {reservationHistory?.map((reservation, i) => (
+              {reservationHistory?.reverse()?.map((reservation, i) => (
                 <TableRow key={i}>
                   <TableCell>{reservation.createdAt}</TableCell>
                   <TableCell>{reservation.userId}</TableCell>

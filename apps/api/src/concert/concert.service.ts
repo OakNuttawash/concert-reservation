@@ -1,4 +1,8 @@
-import { Injectable } from '@nestjs/common';
+import {
+  BadRequestException,
+  Injectable,
+  NotFoundException,
+} from '@nestjs/common';
 import {
   CreateConcertDto,
   GetAdminConcertDto,
@@ -49,6 +53,10 @@ export class ConcertService {
   }
 
   removeConcert(id: number) {
+    const concert = this.concerts.find((concert) => concert.id === id);
+    if (!concert) {
+      throw new NotFoundException('Concert not found');
+    }
     this.concerts = this.concerts.filter((concert) => concert.id !== id);
     return;
   }
@@ -58,10 +66,10 @@ export class ConcertService {
     const userId = 1;
     const concert = this.concerts.find((concert) => concert.id === concertId);
     if (!concert) {
-      throw new Error('Concert not found');
+      throw new NotFoundException('Concert not found');
     }
     if (concert.currentTotalSeat <= 0) {
-      throw new Error('No more seats available');
+      throw new BadRequestException('No more seats available');
     }
 
     const existingReservation = this.reservations.findLast(
@@ -72,7 +80,7 @@ export class ConcertService {
       existingReservation &&
       existingReservation.status === ReservationStatus.RESERVE
     ) {
-      throw new Error(
+      throw new BadRequestException(
         'You already have an active reservation for this concert',
       );
     }
@@ -96,7 +104,7 @@ export class ConcertService {
     const userId = 1;
     const concert = this.concerts.find((concert) => concert.id === concertId);
     if (!concert) {
-      throw new Error('Concert not found');
+      throw new NotFoundException('Concert not found');
     }
 
     const reservation = this.reservations.findLast(
@@ -105,11 +113,11 @@ export class ConcertService {
     );
 
     if (!reservation) {
-      throw new Error('Reservation not found');
+      throw new NotFoundException('Reservation not found');
     }
 
     if (reservation.status === ReservationStatus.CANCEL) {
-      throw new Error('Reservation is already cancelled');
+      throw new BadRequestException('Reservation is already cancelled');
     }
 
     const cancelReservation: Reservation = {
@@ -122,7 +130,7 @@ export class ConcertService {
     this.reservations.push(cancelReservation);
 
     concert.currentTotalSeat++;
-    return reservation;
+    return cancelReservation;
   }
 
   findAllReservationHistory(): GetReservationHistoryDto[] {
