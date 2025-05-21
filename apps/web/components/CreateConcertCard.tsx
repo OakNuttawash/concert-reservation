@@ -33,7 +33,6 @@ export function CreateConcertCard() {
   async function onSubmit(data: z.infer<typeof concertSchema>) {
     startTransition(async () => {
       const res = await createConcert(data);
-      form.reset();
       if (res.status === "error") {
         toast({
           title: "Error",
@@ -41,6 +40,7 @@ export function CreateConcertCard() {
           variant: "destructive",
         });
       } else {
+        form.reset();
         toast({
           title: "Success",
           description: res.message,
