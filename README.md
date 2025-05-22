@@ -73,7 +73,7 @@ pnpm --filter api test
 
 ## Architecture Overview
 
-````bash
+```bash
 +------------------------------------------+
 |                Frontend                  |
 |  +----------------------------------+    |
@@ -132,7 +132,7 @@ web/...
 ├── api/... --- Contain all api resource
 ├── components/ ... --- Reusable and Base UI components
 └── lib/... --- Useful functions and utils
-````
+```
 
 ## Technology Stack
 
