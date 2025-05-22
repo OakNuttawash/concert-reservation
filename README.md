@@ -1,84 +1,174 @@
-# Turborepo starter
+# Concert System
 
-This Turborepo starter is maintained by the Turborepo core team.
+A full-stack application for concert management built with NestJS and Next.js.
 
-## Using this example
+## Project Structure
 
-Run the following command:
+This project is a monorepo managed with Turborepo, containing:
 
-```sh
-npx create-turbo@latest
+- `apps/api`: NestJS backend application
+- `apps/web`: Next.js frontend application
+
+## Prerequisites
+
+- Node.js (v18 or later)
+- pnpm
+- Docker
+
+## Setup and Installation
+
+1. Clone the repository:
+
+```bash
+git clone <repository-url>
 ```
 
-## What's inside?
+2. Install dependencies:
 
-This Turborepo includes the following packages/apps:
-
-### Apps and Packages
-
-- `docs`: a [Next.js](https://nextjs.org/) app
-- `web`: another [Next.js](https://nextjs.org/) app
-- `@repo/ui`: a stub React component library shared by both `web` and `docs` applications
-- `@repo/eslint-config`: `eslint` configurations (includes `eslint-config-next` and `eslint-config-prettier`)
-- `@repo/typescript-config`: `tsconfig.json`s used throughout the monorepo
-
-Each package/app is 100% [TypeScript](https://www.typescriptlang.org/).
-
-### Utilities
-
-This Turborepo has some additional tools already setup for you:
-
-- [TypeScript](https://www.typescriptlang.org/) for static type checking
-- [ESLint](https://eslint.org/) for code linting
-- [Prettier](https://prettier.io) for code formatting
-
-### Build
-
-To build all apps and packages, run the following command:
-
-```
-cd my-turborepo
-pnpm build
+```bash
+pnpm install
 ```
 
-### Develop
+3. Start the Docker containers:
 
-To develop all apps and packages, run the following command:
-
+```bash
+pnpm compose:up
 ```
-cd my-turborepo
+
+**Note:**
+
+- Port 8080 for backend, 3000 for frontend, and 5432 for PostgreSQL.
+
+## Running the Application
+
+### Development Mode
+
+Run all applications simultaneously:
+
+```bash
 pnpm dev
 ```
 
-### Remote Caching
+Or run applications individually:
 
-> [!TIP]
-> Vercel Remote Cache is free for all plans. Get started today at [vercel.com](https://vercel.com/signup?/signup?utm_source=remote-cache-sdk&utm_campaign=free_remote_cache).
+Backend (API):
 
-Turborepo can use a technique known as [Remote Caching](https://turborepo.com/docs/core-concepts/remote-caching) to share cache artifacts across machines, enabling you to share build caches with your team and CI/CD pipelines.
-
-By default, Turborepo will cache locally. To enable Remote Caching you will need an account with Vercel. If you don't have an account you can [create one](https://vercel.com/signup?utm_source=turborepo-examples), then enter the following commands:
-
-```
-cd my-turborepo
-npx turbo login
+```bash
+pnpm --filter api dev
 ```
 
-This will authenticate the Turborepo CLI with your [Vercel account](https://vercel.com/docs/concepts/personal-accounts/overview).
+Frontend (Web):
 
-Next, you can link your Turborepo to your Remote Cache by running the following command from the root of your Turborepo:
-
-```
-npx turbo link
+```bash
+pnpm --filter web dev
 ```
 
-## Useful Links
+## Testing
 
-Learn more about the power of Turborepo:
+Run unit tests for backend
 
-- [Tasks](https://turborepo.com/docs/crafting-your-repository/running-tasks)
-- [Caching](https://turborepo.com/docs/crafting-your-repository/caching)
-- [Remote Caching](https://turborepo.com/docs/core-concepts/remote-caching)
-- [Filtering](https://turborepo.com/docs/crafting-your-repository/running-tasks#using-filters)
-- [Configuration Options](https://turborepo.com/docs/reference/configuration)
-- [CLI Usage](https://turborepo.com/docs/reference/command-line-reference)
+```bash
+pnpm --filter api test
+```
+
+## Architecture Overview
+
+````bash
++------------------------------------------+
+|                Frontend                  |
+|  +----------------------------------+    |
+|  |            Next.js App           |    |
+|  |  +------------+  +------------+  |    |
+|  |  |   Admin    |  |   User     |  |    |
+|  |  |            |  |            |  |    |
+|  |  +------------+  +------------+  |    |
+|  |         |            |           |    |
+|  |  +----------------------------------+ |
+|  |  |        API Integration          |  |
+|  |  |        (openapi-fetch)          |  |
+|  |  +----------------------------------+ |
++------------------------------------------+
+                    |
+                    | HTTP/REST
+                    |
++------------------------------------------+
+|                Backend                   |
+|  +----------------------------------+    |
+|  |           NestJS API            |     |
+|  |  +----------------------------+ |     |
+|  |  |          Concert           | |     |
+|  |  |          Service           | |     |
+|  |  +----------------------------+ |     |
+|  |         |   Typeorm  |          |     |
+|  |         |            |          |     |
+|  |  +------------------------------+     |
+|  |  |          PostgreSQL          |     |
+|  |  |          Database            |     |
+|  |  +------------------------------+     |
++------------------------------------------+
+```
+
+### Backend (NestJS)
+
+The backend follows a modular architecture with structure:
+
+- **Controllers**: Handle HTTP requests and define API endpoints
+- **Services**: Contain all business logic
+- **DTOs**: Define data transfer objects for validation
+- **Entities**: Define database models
+
+### Frontend (Next.js)
+
+The frontend structure:
+
+```bash
+web/...
+├── app/... --- App router
+│ ├── (main)/... --- Main content group routes
+│ │ ├── @admin/... --- Admin routes
+│ │ ├── @user/... --- User routes
+│ │ └── layout.tsx --- Conditional Layout component
+│ └── layout.tsx --- Main Layout component
+├── api/... --- Contain all api resource
+├── components/ ... --- Reusable and Base UI components
+└── lib/... --- Useful functions and utils
+````
+
+## Technology Stack
+
+### Backend
+
+- **NestJS**: Progressive Node.js framework
+- **TypeScript**: Type-safe development
+- **Typeorm**: ORM library
+- **PostgreSQL**: Relational database
+- **OpenAPI**: API documentation
+- **Jest**: Testing framework
+- **class-validator**: Input validation
+- **class-transformer**: Object transformation
+
+### Frontend
+
+- **Next.js**: React framework
+- **TypeScript**: Type-safe development
+- **TailwindCSS**: CSS framework
+- **shadcn-ui**: Base UI component library
+- **react-hook-form**: Form handling
+- **zod**: Schema validation
+- **openapi-typescript**: Generated types from OpenAPI schema
+- **openapi-fetch**: API client
+- **dayjs**: Date manipulation
+
+### Bonus Task
+
+● Express your opinion about how to optimize your website in case that this
+website contains intensive data and when more people access, the lower speed
+you get?
+
+Ans: ถ้าหากเว็บไซต์มี load ที่สูงจากการจัดการข้อมูลที่เยอะกับผู้เข้าใช้งานพร้อมกันจำนวนมาก มองว่าต้องมีการทำ caching ในข้อมูลที่มีการใช้งานบ่อยๆและข้อมูลที่มีการประมวลผลเยอะๆเพราะจะทำให้การเข้าถึงข้อมูลมาแสดงผลได้รวดเร็วขึ้น และการใช้ indexing ในฐานข้อมูลเพื่อประสิทธิภาพในการดึงข้อมูลที่รวดเร็วขึ้น รวมไปถึงถ้ามีคนเข้าใช้งานเยอะอาจพิจารณาการใช้ load balancer ที่ช่วยกระจายการรับภาระของเซิร์ฟเวอร์ไม่ให้หนักเกินไป
+
+● Express your opinion about how to handle when many users want to reserve the
+ticket at the same time? We want to ensure that in the concerts there is no one
+that needs to stand up during the show.
+
+Ans: การป้องกันโดยไม่ให้เกิดการจองซ้ำหรือเกินจำนวนที่นั่ง อาจทำเป็นระบบ Queue เพื่อให้สามารถจัดลำดับผู้ใช้งานได้ไม่เกิดการจองซ้อนทับกัน และ Database ที่มีการรองรับการทำ Row Locking และ Transaction อย่าง PostgreSQL ที่ช่วยให้ผู้ใช้หลายคนแก้ไขฐานข้อมูลหลายคนได้พร้อมกันโดยไม่ส่งผลกระทบคนอื่น รวมไปถึงใช้ websocket ในการอัพเดตสถานะและจำนวนที่นั่งแบบ realtime ให้ผู้ใช้งานเห็นข้อมูลที่ล่าสุดที่สุด
